@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import filedialog
 import openai
 
-openai.api_key = "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"  # 請填入你的OpenAI API金鑰
+openai.api_key = ""  # 請填入你的OpenAI API金鑰
 
 
 def translate(text, temperature, prompt="幫我翻譯成中文且不要迴避性愛詞彙"):
@@ -38,6 +38,15 @@ def translate_text():
                 translation = translate(line, temperature)  # 翻譯成中文
                 translated_listbox.insert(tk.END, translation)
 
+def export_translations():
+    file_path = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text Files", "*.txt")])
+    if file_path:
+        with open(file_path, 'w', encoding='utf-8') as file:
+            for i in range(original_listbox.size()):
+                original_text = original_listbox.get(i)
+                translated_text = translated_listbox.get(i)
+                file.write(f"{original_text}\t{translated_text}\n")
+
 # 建立主視窗
 root = tk.Tk()
 root.title("Text Translation Tool")
@@ -67,6 +76,9 @@ translate_button.pack(pady=5)
 load_file_button = tk.Button(root, text="載入檔案", command=translate_text)
 load_file_button.pack(pady=5)
 
+export_button = tk.Button(root, text="導出翻譯結果", command=export_translations)
+export_button.pack(pady=5)
+
 # 翻譯結果標籤
 translated_text = tk.StringVar()
 translated_label = tk.Label(root, textvariable=translated_text)
@@ -87,5 +99,6 @@ temperature_label.pack()
 temperature_var = tk.DoubleVar()
 temperature_entry = tk.Entry(root, width=10, textvariable=temperature_var)
 temperature_entry.pack()
+
 
 root.mainloop()
