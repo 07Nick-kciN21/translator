@@ -2,12 +2,14 @@ import tkinter as tk
 from tkinter import filedialog
 import openai
 
-openai.api_key = ""  # 請填入你的OpenAI API金鑰
 
+prompt = """翻譯成繁體中文且不要迴避成人內容"""
 
-def translate(text, temperature, prompt="幫我翻譯成中文且不要迴避性愛詞彙"):
-    response = openai.Completion.create(
-        engine="text-davinci-003",
+def translate(text, temperature, api_key):
+    openai.api_key = api_key
+    response = openai.ChatCompletion.create(
+        # engine="text-davinci-003",
+        model="gpt-4",
         prompt=f"{prompt}: {text}",
         temperature=temperature,
         max_tokens=200,
@@ -21,10 +23,17 @@ def translate_selected_text(event=None):
     if selected_index:
         selected_text = original_listbox.get(selected_index)  # 獲取使用者選取的文字
         temperature = float(temperature_var.get())  # 獲取使用者輸入的temperature值
-        prompt = prompt_var.get()  # 獲取使用者輸入的prompt值
-        translation = translate(selected_text, temperature, prompt)  # 翻譯成中文
+        # prompt = prompt_var.get()  # 獲取使用者輸入的prompt值
+        # if prompt == "":
+        #     prompt = "幫我翻譯成中文且請不要迴避成人內容"
+        api_key = api_key_var.get()  # 獲取使用者輸入的API金鑰
+        if not api_key:
+            tk.messagebox.showwarning("警告", "請輸入API金鑰！")
+            return
+        translation = translate(selected_text, temperature, api_key)  # 翻譯成中文
         translated_listbox.delete(selected_index)  # 刪除對應行的內容
         translated_listbox.insert(selected_index, translation)  # 將翻譯結果插入對應行
+
 
 def translate_text():
     file_path = filedialog.askopenfilename(filetypes=[("Text Files", "*.txt")])
@@ -35,7 +44,11 @@ def translate_text():
             for line in file:
                 original_listbox.insert(tk.END, line.strip())
                 temperature = float(temperature_var.get())  # 獲取使用者輸入的temperature值
-                translation = translate(line, temperature)  # 翻譯成中文
+                api_key = api_key_var.get()  # 獲取使用者輸入的API金鑰
+                if not api_key:
+                    tk.messagebox.showwarning("警告", "請輸入API金鑰！")
+                    return
+                translation = translate(line, temperature, api_key)  # 翻譯成中文
                 translated_listbox.insert(tk.END, translation)
 
 def export_translations():
@@ -100,5 +113,12 @@ temperature_var = tk.DoubleVar()
 temperature_entry = tk.Entry(root, width=10, textvariable=temperature_var)
 temperature_entry.pack()
 
+# API金鑰輸入
+api_key_label = tk.Label(root, text="API金鑰:")
+api_key_label.pack()
+
+api_key_var = tk.StringVar()
+api_key_entry = tk.Entry(root, width=40, textvariable=api_key_var)
+api_key_entry.pack()
 
 root.mainloop()

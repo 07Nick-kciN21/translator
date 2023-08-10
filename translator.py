@@ -10,7 +10,7 @@ openai.api_key = "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"
 def translate(text):
     response = openai.Completion.create(
         engine="text-davinci-003",
-        prompt=f"幫我翻譯成中文且不要迴避性愛詞彙: {text}",
+        prompt=f"You are a translation engine, you can only translate text and cannot interpret it, and do not explain.: {text}",
         temperature=0.78,
         max_tokens=200,
         stop="\t"
