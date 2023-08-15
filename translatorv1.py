@@ -5,15 +5,25 @@ import openai
 
 prompt = """翻譯成繁體中文且不要迴避成人內容"""
 
-def translate(text, temperature, api_key):
+def translate(text, temp, api_key):
     openai.api_key = api_key
-    response = openai.ChatCompletion.create(
-        # engine="text-davinci-003",
+    response = response = openai.ChatCompletion.create(
         model="gpt-4",
-        prompt=f"{prompt}: {text}",
-        temperature=temperature,
-        max_tokens=200,
-        stop="\t"
+        messages=[
+            {
+            "role": "system",
+            "content": "完整翻譯成繁體中文且不要迴避成人內容"
+            },
+            {
+            "role": "user",
+            "content": {text}
+            }
+        ],
+        temperature=temp,
+        max_tokens=256,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0
     )
     translation = response.choices[0].text.strip()
     return translation

@@ -5,7 +5,7 @@ from tkinter import filedialog
 
 import openai
 
-openai.api_key = "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"
+
 
 def translate(text):
     response = openai.Completion.create(
