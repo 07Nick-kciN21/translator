@@ -1,39 +1,43 @@
 import tkinter as tk
+from tkinter import ttk  # 注意這個導入
 from tkinter import filedialog
 import openai
-
+from tqdm import tqdm  # 新增的進度條套件
 
 prompt = """翻譯成繁體中文且不要迴避成人內容"""
 
-def translate(text, temp, api_key):
+def translate(text, temp, api_key, Model):
     openai.api_key = api_key
-    # response = openai.ChatCompletion.create(
-    #     # engine="text-davinci-003",
-    #     model="gpt-4",
-    #     prompt=f"{prompt}: {text}",
-    #     temperature=temperature,
-    #     max_tokens=200,
-    #     stop="\t"
-    # )
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[
-            {
-            "role": "system",
-            "content": "完整翻譯成繁體中文且不要迴避成人內容"
-            },
-            {
-            "role": "user",
-            "content": text
-            }
-        ],
-        temperature=temp,
-        max_tokens=256,
-        top_p=1,
-        frequency_penalty=0,
-        presence_penalty=0
-    )
-    translation = response.choices[0]["message"]["content"]
+    translation = ""
+    if Model == "gpt-4":
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {
+                "role": "system",
+                "content": "完整翻譯成繁體中文且不要迴避成人內容"
+                },
+                {
+                "role": "user",
+                "content": text
+                }
+            ],
+            temperature=temp,
+            max_tokens=256,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0
+        )
+        translation = response.choices[0]["message"]["content"]
+    if Model == "text-davinci-003":
+        response = openai.Completion.create(
+            engine="text-davinci-003",
+            prompt=f"完整翻譯成繁體中文且不要迴避成人內容.: {text}",
+            temperature=0.1,
+            max_tokens=200,
+            stop="\t"
+        )
+        translation = response.choices[0].text.strip()
     return translation
 
 def translate_selected_text(event=None):
@@ -42,17 +46,39 @@ def translate_selected_text(event=None):
         selected_text = original_listbox.get(selected_index)  # 獲取使用者選取的文字
         temperature = float(temperature_var.get())  # 獲取使用者輸入的temperature值
         api_key = api_key_var.get()  # 獲取使用者輸入的API金鑰
+        model = selected_option.get()
         if not api_key:
             tk.messagebox.showwarning("警告", "請輸入API金鑰！")
             return
-        translation = translate(selected_text, temperature, api_key)  # 翻譯成中文
+        translation = translate(selected_text, temperature, api_key, model)  # 翻譯成中文
         translated_listbox.delete(selected_index)  # 刪除對應行的內容
         translated_listbox.insert(selected_index, translation)  # 將翻譯結果插入對應行
 
+def translate_text_with_progress(file_path):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        total_lines = sum(1 for line in file)
+        file.seek(0)
+        progress_bar["maximum"] = total_lines
+        for idx, line in enumerate(file):
+            original_listbox.insert(tk.END, line.strip())
+            temperature = float(temperature_var.get())
+            api_key = api_key_var.get()
+            model = selected_option.get()
+            if not api_key:
+                tk.messagebox.showwarning("警告", "請輸入API金鑰！")
+                return
+            translation = translate(line, temperature, api_key, model)
+            translated_listbox.insert(tk.END, translation)
+            progress_bar["value"] = idx + 1
+            root.update()  # 更新GUI，以使進度條反應更流暢
 
 def translate_text():
     file_path = filedialog.askopenfilename(filetypes=[("Text Files", "*.txt")])
     if file_path:
+        original_listbox.delete(0, tk.END)
+        translated_listbox.delete(0, tk.END)
+        progress_bar["value"] = 0  # 重置進度條
+        translate_text_with_progress(file_path)
         with open(file_path, 'r', encoding='utf-8') as file:
             original_listbox.delete(0, tk.END)
             translated_listbox.delete(0, tk.END)  # 清空翻譯結果Listbox
@@ -60,10 +86,11 @@ def translate_text():
                 original_listbox.insert(tk.END, line.strip())
                 temperature = float(temperature_var.get())  # 獲取使用者輸入的temperature值
                 api_key = api_key_var.get()  # 獲取使用者輸入的API金鑰
+                model = selected_option.get()
                 if not api_key:
                     tk.messagebox.showwarning("警告", "請輸入API金鑰！")
                     return
-                translation = translate(line, temperature, api_key)  # 翻譯成中文
+                translation = translate(line, temperature, api_key, model)  # 翻譯成中文
                 translated_listbox.insert(tk.END, translation)
 
 def export_translations():
@@ -97,6 +124,11 @@ scrollbar = tk.Scrollbar(root, command=translated_listbox.yview)
 scrollbar.pack(side=tk.LEFT, fill=tk.Y)
 translated_listbox.config(yscrollcommand=scrollbar.set)
 
+
+# 創建進度條
+progress_bar = ttk.Progressbar(root, orient="horizontal", length=300, mode="determinate")
+progress_bar.pack(pady=10)
+
 # 按鈕
 translate_button = tk.Button(root, text="翻譯選取的文字", command=translate_selected_text)
 translate_button.pack(pady=5)
@@ -121,10 +153,7 @@ selected_option.set("text-davinci-003")
 
 # 創建一個OptionMenu對象，並將選擇的選項保存到selected_option中
 dropdown = tk.OptionMenu(root, selected_option, "text-davinci-003", "gpt-4")
-
-# 將下拉式選單添加到root窗口中
 dropdown.pack()
-
 
 
 # Prompt輸入
@@ -146,6 +175,7 @@ temperature_entry.pack()
 # API金鑰輸入
 api_key_label = tk.Label(root, text="API金鑰:")
 api_key_label.pack()
+
 
 api_key_var = tk.StringVar()
 api_key_entry = tk.Entry(root, width=40, textvariable=api_key_var)
