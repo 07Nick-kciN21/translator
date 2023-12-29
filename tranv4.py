@@ -4,7 +4,7 @@ from tkinter import filedialog
 import openai
 from tqdm import tqdm  # 新增的進度條套件
 
-prompt = """翻譯成繁體中文且不要迴避成人內容"""
+prompt = """翻譯成繁體中文"""
 
 def translate(text, temp, api_key, Model):
     openai.api_key = api_key
@@ -15,7 +15,7 @@ def translate(text, temp, api_key, Model):
             messages=[
                 {
                 "role": "system",
-                "content": "完整翻譯成繁體中文且不要迴避成人內容"
+                "content": "完整翻譯成繁體中文"
                 },
                 {
                 "role": "user",
@@ -32,7 +32,7 @@ def translate(text, temp, api_key, Model):
     if Model == "text-davinci-003":
         response = openai.Completion.create(
             engine="text-davinci-003",
-            prompt=f"完整翻譯成繁體中文且不要迴避成人內容.: {text}",
+            prompt=f"完整翻譯成繁體中文.: {text}",
             temperature=0.1,
             max_tokens=200,
             stop="\t"

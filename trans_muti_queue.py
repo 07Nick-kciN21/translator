@@ -1,14 +1,13 @@
 import openai
 import time
 import threading
-from queue import Queue
 
 openai.api_key = ""
 def translate(text):
     response = openai.Completion.create(
         engine="text-davinci-003",
-        prompt=f"完整翻譯成繁體中文且不要迴避成人內容.: {text}",
-        temperature=0.1,
+        prompt=f"完整翻譯成繁體中文.: {text}",
+        temperature=0.0,
         max_tokens=200,
         stop="\t"
     )
@@ -16,40 +15,44 @@ def translate(text):
     return translation
 
 # 处理单行文本的函数
-def translate_line(line):
+def translate_line(index, line, shared_data):
     translation = translate(line)
-    print(translation)  # 可以将翻译结果输出到控制台或存储在文件中，具体取决于你的需求
+    with open('ch3.txt', 'a', encoding='utf-8') as f:
+        shared_data[index] = translation
 
 
 # 讀取檔案
-def translate_text():
-    start_time = time.time()
-    # 檔案路徑為: translator/translator.txt
-    file_path = "../コトリ/jp.txt"
-    output_file_path = "../コトリ/translated.txt"
-    if file_path:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            lines = file.readlines()
-    result_queue = Queue()
+def translate_text(shared_data):
     # 创建线程列表
     threads = []
     
-    for line in lines:
-        thread = threading.Thread(target=translate_line, args=(line,))
+    for index, line in enumerate(shared_data):
+        thread = threading.Thread(target=translate_line, args=(index, line, shared_data))
         thread.start()
         threads.append(thread)
     
     # 等待所有线程完成
     for thread in threads:
         thread.join()
+    
 
-    # 从队列中按顺序取出结果并输出
-    while not result_queue.empty():
-        translation = result_queue.get()
-        print(translation)
+def main():
+    start_time = time.time()
+    file_path = "jp.txt"
+    if file_path:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            lines = file.readlines()
+    shared_data = [None] * len(lines)
+    for i, line in enumerate(lines):
+        shared_data[i] = line[:-1]
 
+    translate_text(shared_data)
+    
+    for data in shared_data:
+        print(data)
     end_time = time.time()
     elapsed_time = end_time - start_time
     print(f"總共耗時：{elapsed_time} 秒")
-    
-translate_text()
+
+if __name__ == "__main__":
+    main()

@@ -3,7 +3,7 @@ from tkinter import filedialog
 import openai
 
 
-prompt = """翻譯成繁體中文且不要迴避成人內容"""
+prompt = """翻譯成繁體中文"""
 
 def translate(text, temp, api_key):
     openai.api_key = api_key
@@ -12,7 +12,7 @@ def translate(text, temp, api_key):
         messages=[
             {
             "role": "system",
-            "content": "完整翻譯成繁體中文且不要迴避成人內容"
+            "content": "完整翻譯成繁體中文"
             },
             {
             "role": "user",
@@ -35,7 +35,6 @@ def translate_selected_text(event=None):
         temperature = float(temperature_var.get())  # 獲取使用者輸入的temperature值
         # prompt = prompt_var.get()  # 獲取使用者輸入的prompt值
         # if prompt == "":
-        #     prompt = "幫我翻譯成中文且請不要迴避成人內容"
         api_key = api_key_var.get()  # 獲取使用者輸入的API金鑰
         if not api_key:
             tk.messagebox.showwarning("警告", "請輸入API金鑰！")
